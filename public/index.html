@@ -66,12 +66,8 @@
             font-weight: bold;
         }
 
-        .logout-btn:hover {
-            background: #e9a43d;
-        }
-
         .hero {
-            padding: 75px 7%;
+            padding: 65px 7%;
             background: linear-gradient(90deg, #151b2b, #263c50);
         }
 
@@ -82,7 +78,7 @@
 
         .hero p {
             color: #c0c8d5;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .search {
@@ -96,11 +92,17 @@
         }
 
         .section {
-            padding: 40px 7%;
+            padding: 38px 7%;
         }
 
         .section h2 {
-            margin-bottom: 25px;
+            margin-bottom: 8px;
+        }
+
+        .section-description {
+            color: #a5adbd;
+            font-size: 14px;
+            margin-bottom: 22px;
         }
 
         .movie-container {
@@ -117,7 +119,7 @@
         }
 
         .movie-card:hover {
-            transform: translateY(-6px);
+            transform: translateY(-5px);
         }
 
         .poster {
@@ -149,6 +151,7 @@
 
         .movie-info h3 {
             margin-bottom: 9px;
+            font-size: 17px;
         }
 
         .movie-info p {
@@ -157,12 +160,19 @@
             margin-bottom: 7px;
         }
 
+        .rating {
+            color: #ffb84d !important;
+            font-weight: bold;
+        }
+
         .details-link {
             color: #31d7c2 !important;
             margin-top: 12px;
+            font-weight: bold;
         }
 
-        .watchlist-btn {
+        .watchlist-btn,
+        .import-btn {
             width: 100%;
             padding: 11px;
             margin-top: 12px;
@@ -174,13 +184,46 @@
             cursor: pointer;
         }
 
-        .watchlist-btn:hover {
+        .watchlist-btn:hover,
+        .import-btn:hover {
             background: #24b9a7;
         }
 
-        .watchlist-btn:disabled {
+        button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .search-results {
+            display: none;
+            margin-top: 15px;
+            padding: 18px;
+            background: #151b2b;
+            border-radius: 10px;
+            max-width: 950px;
+        }
+
+        .search-results h3 {
+            margin-bottom: 15px;
+        }
+
+        .search-results .movie-container {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .search-results .poster {
+            height: 210px;
+        }
+
+        .status-message {
+            color: #a5adbd;
+            padding: 15px 0;
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid #263449;
+            margin: 0 7%;
         }
 
         footer {
@@ -222,390 +265,735 @@
 
 <body>
 
-    <header>
-        <div class="logo">CinePulse</div>
+<header>
+    <div class="logo">CinePulse</div>
 
-        <nav id="navigation">
-            <a href="index.html">Home</a>
-            <a href="#movies">Movies</a>
-            <a href="watchlist.html">My Watchlist</a>
-            <span id="authNavigation"></span>
-        </nav>
-    </header>
+    <nav id="navigation">
+        <a href="index.html">Home</a>
+        <a href="#trending">Trending</a>
+        <a href="#movies">Explore</a>
+        <a href="watchlist.html">My Watchlist</a>
+        <span id="authNavigation"></span>
+    </nav>
+</header>
 
-    <section class="hero">
-        <h1>Discover Your Next Favourite Movie</h1>
-        <p>Explore movies, read reviews and find something worth watching.</p>
+<section class="hero">
+    <h1>Discover Your Next Favourite Movie</h1>
+    <p>Explore movies, read reviews and find something worth watching.</p>
 
-        <input
-            type="text"
-            id="searchInput"
-            class="search"
-            placeholder="Search movies..."
-        >
+    <input
+        type="text"
+        id="searchInput"
+        class="search"
+        placeholder="Search movies using OMDb..."
+        autocomplete="off"
+    >
 
-        <select id="languageFilter" class="search">
-            <option value="">All Languages</option>
-            <option value="English">English</option>
-            <option value="Kannada">Kannada</option>
-            <option value="Hindi">Hindi</option>
-            <option value="Tamil">Tamil</option>
-        </select>
+    <select id="languageFilter" class="search">
+        <option value="">All Languages</option>
+    </select>
 
-        <select id="genreFilter" class="search">
-            <option value="">All Genres</option>
-        </select>
-    </section>
+    <select id="genreFilter" class="search">
+        <option value="">All Genres</option>
+    </select>
 
-    <section class="section" id="movies">
-        <h2>Explore Movies</h2>
+    <div class="search-results" id="searchResults">
+        <h3>Search Results</h3>
+        <div id="searchResultsContainer" class="movie-container"></div>
+    </div>
+</section>
 
-        <div class="movie-container" id="movieContainer">
-            Loading movies...
-        </div>
-    </section>
+<section class="section" id="trending">
+    <h2>🔥 Trending Picks</h2>
+    <p class="section-description">Curated movies selected for discovery.</p>
+    <div class="movie-container" id="trendingContainer">
+        <p class="status-message">Loading movies...</p>
+    </div>
+</section>
 
-    <footer>
-        <p>© 2026 CinePulse. Your Movie Discovery Hub.</p>
-    </footer>
+<hr class="section-divider">
 
-    <script>
-        let allMovies = [];
+<section class="section" id="latest">
+    <h2>🆕 Latest Releases</h2>
+    <p class="section-description">Movies with the newest release dates in your CinePulse collection.</p>
+    <div class="movie-container" id="latestContainer">
+        <p class="status-message">Loading movies...</p>
+    </div>
+</section>
 
-        // Update navigation based on login status
-        function updateNavigation() {
-            const authNavigation =
-                document.getElementById("authNavigation");
+<hr class="section-divider">
 
-            let loggedInUser = null;
+<section class="section" id="popular">
+    <h2>⭐ Popular Picks</h2>
+    <p class="section-description">A curated collection of well-known movies.</p>
+    <div class="movie-container" id="popularContainer">
+        <p class="status-message">Loading movies...</p>
+    </div>
+</section>
 
-            try {
-                loggedInUser = JSON.parse(
-                    localStorage.getItem("cinepulseUser")
-                );
-            } catch (error) {
-                loggedInUser = null;
-            }
+<hr class="section-divider">
 
-            if (loggedInUser && loggedInUser.user_id) {
-                const welcome = document.createElement("span");
+<section class="section" id="topRated">
+    <h2>🏆 Top Rated Movies</h2>
+    <p class="section-description">Sorted using IMDb ratings supplied by OMDb.</p>
+    <div class="movie-container" id="topRatedContainer">
+        <p class="status-message">Loading ratings...</p>
+    </div>
+</section>
 
-                welcome.className = "welcome-user";
-                welcome.textContent =
-                    "Welcome, " + (loggedInUser.username || "User");
+<hr class="section-divider">
 
-                const logoutButton = document.createElement("button");
+<section class="section" id="movies">
+    <h2>Explore Movies</h2>
+    <p class="section-description">Movies saved in your CinePulse database.</p>
 
-                logoutButton.className = "logout-btn";
-                logoutButton.textContent = "Logout";
-                logoutButton.onclick = logoutUser;
+    <div class="movie-container" id="movieContainer">
+        <p class="status-message">Loading movies...</p>
+    </div>
+</section>
 
-                authNavigation.replaceChildren(
-                    welcome,
-                    logoutButton
-                );
+<footer>
+    <p>© 2026 CinePulse. Your Movie Discovery Hub.</p>
+</footer>
 
-            } else {
-                authNavigation.innerHTML =
-                    '<a href="auth.html">Login</a>' +
-                    '<a href="auth.html">Register</a>';
-            }
+<script>
+    let allMovies = [];
+    let searchTimer = null;
+
+    const trendingIds = [
+        "tt1375666",
+        "tt0816692",
+        "tt15398776",
+        "tt15239678"
+    ];
+
+    const popularIds = [
+        "tt0468569",
+        "tt4154796",
+        "tt10872600",
+        "tt0111161"
+    ];
+
+    const topRatedIds = [
+        "tt0111161",
+        "tt0068646",
+        "tt0468569",
+        "tt0050083"
+    ];
+
+    const omdbCache = new Map();
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[character]);
+    }
+
+    function updateNavigation() {
+        const authNavigation =
+            document.getElementById("authNavigation");
+
+        let loggedInUser = null;
+
+        try {
+            loggedInUser = JSON.parse(
+                localStorage.getItem("cinepulseUser")
+            );
+        } catch (error) {
+            loggedInUser = null;
         }
 
-        // Logout user
-        function logoutUser() {
-            const confirmLogout =
-                confirm("Are you sure you want to logout?");
+        if (loggedInUser && loggedInUser.user_id) {
+            const welcome = document.createElement("span");
+            welcome.className = "welcome-user";
+            welcome.textContent =
+                "Welcome, " + (loggedInUser.username || "User");
 
-            if (confirmLogout) {
-                localStorage.removeItem("cinepulseUser");
+            const logoutButton = document.createElement("button");
+            logoutButton.className = "logout-btn";
+            logoutButton.textContent = "Logout";
+            logoutButton.onclick = logoutUser;
 
-                alert("Logged out successfully!");
+            authNavigation.replaceChildren(welcome, logoutButton);
+        } else {
+            authNavigation.innerHTML =
+                '<a href="auth.html">Login</a> ' +
+                '<a href="auth.html">Register</a>';
+        }
+    }
 
-                updateNavigation();
-            }
+    function logoutUser() {
+        if (confirm("Are you sure you want to logout?")) {
+            localStorage.removeItem("cinepulseUser");
+            alert("Logged out successfully!");
+            updateNavigation();
+        }
+    }
+
+    function getPosterUrl(posterPath) {
+        if (!posterPath || posterPath === "N/A") {
+            return "";
         }
 
-        // Load movies from backend
-        async function loadMovies() {
-            const container =
-                document.getElementById("movieContainer");
+        if (/^https?:\/\//i.test(posterPath)) {
+            return posterPath;
+        }
 
-            try {
-                const response = await fetch("/api/movies");
+        const cleanPath = posterPath
+            .replace(/\\/g, "/")
+            .replace(/^\/+/, "");
 
-                if (!response.ok) {
-                    throw new Error("Unable to fetch movies");
-                }
+        return "/" + cleanPath
+            .split("/")
+            .map(part => encodeURIComponent(part))
+            .join("/");
+    }
 
+    function showPosterFallback(image) {
+        const placeholder = document.createElement("div");
+        placeholder.className = "poster-placeholder";
+        placeholder.textContent = "No Poster Available";
+        image.replaceWith(placeholder);
+    }
+
+    function createPosterHTML(poster, title) {
+        const url = getPosterUrl(poster);
+
+        if (!url) {
+            return '<div class="poster-placeholder">No Poster Available</div>';
+        }
+
+        return `
+            <img
+                src="${escapeHTML(url)}"
+                alt="${escapeHTML(title)}"
+                onerror="showPosterFallback(this)"
+            >
+        `;
+    }
+
+    // Load movies from the CinePulse database.
+    async function loadMovies() {
+        const container = document.getElementById("movieContainer");
+
+        try {
+            const response = await fetch("/api/movies");
+
+            if (!response.ok) {
+                throw new Error("Unable to fetch movies");
+            }
+
+            const data = await response.json();
+            allMovies = data.movies || [];
+
+            loadGenres();
+            loadLanguages();
+            applyFilters();
+
+        } catch (error) {
+            console.error("Database movies error:", error);
+
+            container.innerHTML =
+                '<p class="status-message">Unable to load movies. Please check your server.</p>';
+
+            document.getElementById("latestContainer").innerHTML =
+                '<p class="status-message">Unable to load latest releases.</p>';
+        }
+    }
+
+    // Load all available genres dynamically.
+    function loadGenres() {
+        const genreFilter = document.getElementById("genreFilter");
+
+        const genres = [
+            ...new Set(
+                allMovies.flatMap(movie =>
+                    (movie.genres || "")
+                        .split(",")
+                        .map(genre => genre.trim())
+                        .filter(Boolean)
+                )
+            )
+        ].sort();
+
+        genreFilter.innerHTML =
+            '<option value="">All Genres</option>';
+
+        genres.forEach(genre => {
+            const option = document.createElement("option");
+            option.value = genre;
+            option.textContent = genre;
+            genreFilter.appendChild(option);
+        });
+    }
+
+    // Load all available languages dynamically.
+    function loadLanguages() {
+        const languageFilter =
+            document.getElementById("languageFilter");
+
+        const languages = [
+            ...new Set(
+                allMovies.flatMap(movie =>
+                    (movie.language || "")
+                        .split(",")
+                        .map(language => language.trim())
+                        .filter(Boolean)
+                )
+            )
+        ].sort();
+
+        languageFilter.innerHTML =
+            '<option value="">All Languages</option>';
+
+        languages.forEach(language => {
+            const option = document.createElement("option");
+            option.value = language;
+            option.textContent = language;
+            languageFilter.appendChild(option);
+        });
+    }
+
+    // Display movies in Explore Movies.
+    function displayMovies(movies) {
+        const container = document.getElementById("movieContainer");
+
+        if (!movies.length) {
+            container.innerHTML =
+                '<p class="status-message">No movies match your selected filters.</p>';
+            return;
+        }
+
+        container.innerHTML = movies.map(movie => {
+            const releaseDate = movie.release_date
+                ? String(movie.release_date).split("T")[0]
+                : "Release date unavailable";
+
+            return `
+                <div class="movie-card">
+                    <div class="poster"
+                         onclick="openMovie(${Number(movie.movie_id)})"
+                         style="cursor:pointer">
+                        ${createPosterHTML(movie.poster_path, movie.title)}
+                    </div>
+
+                    <div class="movie-info">
+                        <h3>${escapeHTML(movie.title)}</h3>
+                        <p>${escapeHTML(movie.language || "Language unavailable")}</p>
+                        <p>${escapeHTML(releaseDate)}</p>
+
+                        <p style="color:#31d7c2">
+                            ${escapeHTML(movie.genres || "Genre unavailable")}
+                        </p>
+
+                        <p class="details-link"
+                           onclick="openMovie(${Number(movie.movie_id)})"
+                           style="cursor:pointer">
+                            View Details →
+                        </p>
+
+                        <button
+                            class="watchlist-btn"
+                            onclick="addToWatchlist(event, ${Number(movie.movie_id)})">
+                            + Add to Watchlist
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    // Display latest releases using the supplied filtered movies.
+    function displayLatestReleases(movies = allMovies) {
+        const container = document.getElementById("latestContainer");
+
+        const latestMovies = [...movies]
+            .filter(movie => movie.release_date)
+            .sort((a, b) =>
+                new Date(b.release_date) - new Date(a.release_date)
+            )
+            .slice(0, 5);
+
+        if (!latestMovies.length) {
+            container.innerHTML =
+                '<p class="status-message">No matching latest releases found.</p>';
+            return;
+        }
+
+        container.innerHTML = latestMovies.map(movie => {
+            const releaseDate =
+                String(movie.release_date).split("T")[0];
+
+            return `
+                <div class="movie-card">
+                    <div class="poster"
+                         onclick="openMovie(${Number(movie.movie_id)})"
+                         style="cursor:pointer">
+                        ${createPosterHTML(movie.poster_path, movie.title)}
+                    </div>
+
+                    <div class="movie-info">
+                        <h3>${escapeHTML(movie.title)}</h3>
+                        <p>${escapeHTML(releaseDate)}</p>
+                        <p>${escapeHTML(movie.language || "Language unavailable")}</p>
+
+                        <p class="details-link"
+                           onclick="openMovie(${Number(movie.movie_id)})"
+                           style="cursor:pointer">
+                            View Details →
+                        </p>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    // Get movie details from the backend OMDb route.
+    async function getOmdbDetails(imdbId) {
+        if (!omdbCache.has(imdbId)) {
+            const request = fetch(
+                `/api/omdb/movie/${encodeURIComponent(imdbId)}`
+            ).then(async response => {
                 const data = await response.json();
 
-                allMovies = data.movies || [];
+                if (!response.ok) {
+                    throw new Error(data.message || "Unable to load movie");
+                }
 
-                loadGenres();
-                displayMovies(allMovies);
-
-            } catch (error) {
-                container.innerHTML =
-                    "Unable to load movies. Please check your server.";
-
-                console.error(error);
-            }
-        }
-
-        // Load genres into dropdown
-        function loadGenres() {
-            const genreFilter =
-                document.getElementById("genreFilter");
-
-            const genres = [...new Set(
-                allMovies.flatMap(movie =>
-                    (movie.genres || "").split(",").filter(Boolean)
-                )
-            )].sort();
-
-            genreFilter.innerHTML =
-                '<option value="">All Genres</option>';
-
-            genres.forEach(genre => {
-                const option = document.createElement("option");
-
-                option.value = genre.trim();
-                option.textContent = genre.trim();
-
-                genreFilter.appendChild(option);
+                return data.movie;
             });
+
+            omdbCache.set(imdbId, request);
         }
 
-        // Create a safe local poster URL
-        function getPosterUrl(posterPath) {
-            if (!posterPath) {
-                return "";
+        return omdbCache.get(imdbId);
+    }
+
+    // Display curated OMDb movie collections.
+    async function loadOmdbCollection(ids, containerId, sortByRating = false) {
+        const container = document.getElementById(containerId);
+
+        try {
+            const results = await Promise.all(
+                ids.map(async imdbId => {
+                    try {
+                        return await getOmdbDetails(imdbId);
+                    } catch (error) {
+                        console.error("Movie loading error:", imdbId, error);
+                        return null;
+                    }
+                })
+            );
+
+            let movies = results.filter(movie => movie !== null);
+
+            if (sortByRating) {
+                movies.sort((a, b) => {
+                    const ratingA = parseFloat(a.imdbRating) || 0;
+                    const ratingB = parseFloat(b.imdbRating) || 0;
+                    return ratingB - ratingA;
+                });
             }
 
-            const cleanPath = posterPath
-                .replace(/\\/g, "/")
-                .replace(/^\/+/, "");
-
-            return "/" + cleanPath
-                .split("/")
-                .map(part => encodeURIComponent(part))
-                .join("/");
-        }
-
-        // Display fallback when poster is missing
-        function showPosterFallback(image) {
-            const placeholder = document.createElement("div");
-
-            placeholder.className = "poster-placeholder";
-            placeholder.textContent = "No Poster Available";
-
-            image.replaceWith(placeholder);
-        }
-
-        // Display movie cards
-        function displayMovies(movies) {
-            const container =
-                document.getElementById("movieContainer");
-
-            if (movies.length === 0) {
-                container.innerHTML = "No movies found.";
+            if (!movies.length) {
+                container.innerHTML =
+                    '<p class="status-message">Unable to load this collection right now.</p>';
                 return;
             }
 
             container.innerHTML = movies.map(movie => {
-                const releaseDate = movie.release_date
-                    ? movie.release_date.toString().split("T")[0]
-                    : "Release date unavailable";
-
-                const posterUrl = getPosterUrl(movie.poster_path);
-
-                const posterHTML = posterUrl
-                    ? `<img
-                            src="${posterUrl}"
-                            alt="${movie.title}"
-                            onerror="showPosterFallback(this)"
-                       >`
-                    : `<div class="poster-placeholder">
-                            No Poster Available
-                       </div>`;
+                const rating = movie.imdbRating &&
+                    movie.imdbRating !== "N/A"
+                    ? `⭐ IMDb ${escapeHTML(movie.imdbRating)}/10`
+                    : "IMDb rating unavailable";
 
                 return `
-                    <div class="movie-card"
-                         onclick="openMovie(${movie.movie_id})"
-                         style="cursor:pointer">
-
+                    <div class="movie-card">
                         <div class="poster">
-                            ${posterHTML}
+                            ${createPosterHTML(movie.Poster, movie.Title)}
                         </div>
 
                         <div class="movie-info">
-                            <h3>${movie.title}</h3>
-
-                            <p>${movie.language || "Language unavailable"}</p>
-
-                            <p>${releaseDate}</p>
-
-                            <p style="color:#31d7c2">
-                                ${movie.genres || "Genre unavailable"}
-                            </p>
-
-                            <p class="details-link">
-                                View Details →
-                            </p>
+                            <h3>${escapeHTML(movie.Title)}</h3>
+                            <p>${escapeHTML(movie.Year || "Year unavailable")}</p>
+                            <p>${escapeHTML(movie.Genre || "Genre unavailable")}</p>
+                            <p class="rating">${rating}</p>
 
                             <button
-                                class="watchlist-btn"
-                                onclick="addToWatchlist(event, ${movie.movie_id})">
-                                + Add to Watchlist
+                                class="import-btn"
+                                onclick="importAndOpen('${escapeHTML(movie.imdbID)}', this)">
+                                View in CinePulse
                             </button>
                         </div>
                     </div>
                 `;
             }).join("");
+
+        } catch (error) {
+            console.error(error);
+            container.innerHTML =
+                '<p class="status-message">Unable to load movies.</p>';
         }
+    }
 
-        // Open movie details page
-        function openMovie(movieId) {
-            window.location.href = `movie.html?id=${movieId}`;
-        }
+    // Import an OMDb movie and open its details page.
+    async function importAndOpen(imdbId, button) {
+        const originalText = button.textContent;
 
-        // Add movie to watchlist
-        async function addToWatchlist(event, movieId) {
-            event.stopPropagation();
+        button.disabled = true;
+        button.textContent = "Adding to CinePulse...";
 
-            let loggedInUser = null;
+        try {
+            const response = await fetch(
+                `/api/omdb/import/${encodeURIComponent(imdbId)}`,
+                { method: "POST" }
+            );
 
-            try {
-                loggedInUser = JSON.parse(
-                    localStorage.getItem("cinepulseUser")
-                );
-            } catch (error) {
-                loggedInUser = null;
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Movie import failed");
             }
 
-            if (!loggedInUser || !loggedInUser.user_id) {
-                alert("Please login to add movies to your watchlist.");
+            window.location.href =
+                `movie.html?id=${encodeURIComponent(data.movie_id)}`;
 
-                window.location.href = "auth.html";
+        } catch (error) {
+            console.error(error);
+            alert(error.message || "Unable to import movie.");
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
+    // Open movie details page.
+    function openMovie(movieId) {
+        window.location.href =
+            `movie.html?id=${encodeURIComponent(movieId)}`;
+    }
+
+    // Add movie to watchlist.
+    async function addToWatchlist(event, movieId) {
+        event.stopPropagation();
+
+        let loggedInUser = null;
+
+        try {
+            loggedInUser = JSON.parse(
+                localStorage.getItem("cinepulseUser")
+            );
+        } catch (error) {
+            loggedInUser = null;
+        }
+
+        if (!loggedInUser || !loggedInUser.user_id) {
+            alert("Please login to add movies to your watchlist.");
+            window.location.href = "auth.html";
+            return;
+        }
+
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = "Adding...";
+
+        try {
+            const userId = loggedInUser.user_id;
+
+            const checkResponse = await fetch(
+                `/api/users/${userId}/watchlist`
+            );
+
+            if (!checkResponse.ok) {
+                throw new Error("Unable to check watchlist.");
+            }
+
+            const watchlistData = await checkResponse.json();
+
+            const alreadyExists =
+                (watchlistData.watchlist || []).some(movie =>
+                    Number(movie.movie_id) === Number(movieId)
+                );
+
+            if (alreadyExists) {
+                alert("This movie is already in your watchlist.");
+                button.textContent = "Already Added";
                 return;
             }
 
-            const button = event.currentTarget;
+            const response = await fetch(
+                `/api/users/${userId}/watchlist`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        movie_id: movieId
+                    })
+                }
+            );
 
-            button.disabled = true;
-            button.textContent = "Adding...";
+            const data = await response.json();
 
-            try {
-                const userId = loggedInUser.user_id;
-
-                // Check whether movie is already in watchlist
-                const checkResponse = await fetch(
-                    `/api/users/${userId}/watchlist`
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Unable to add movie."
                 );
-
-                if (!checkResponse.ok) {
-                    throw new Error("Unable to check watchlist.");
-                }
-
-                const watchlistData = await checkResponse.json();
-
-                const alreadyExists =
-                    (watchlistData.watchlist || []).some(movie =>
-                        Number(movie.movie_id) === Number(movieId)
-                    );
-
-                if (alreadyExists) {
-                    alert("This movie is already in your watchlist.");
-
-                    button.textContent = "Already Added";
-                    return;
-                }
-
-                // Add movie to watchlist
-                const response = await fetch(
-                    `/api/users/${userId}/watchlist`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            movie_id: movieId
-                        })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(
-                        data.message || "Unable to add movie."
-                    );
-                }
-
-                alert("Movie added to your watchlist!");
-
-                button.textContent = "Added to Watchlist";
-
-            } catch (error) {
-                console.error(error);
-
-                alert(error.message || "Something went wrong.");
-
-                button.textContent = "+ Add to Watchlist";
-                button.disabled = false;
             }
+
+            alert("Movie added to your watchlist!");
+            button.textContent = "Added to Watchlist";
+
+        } catch (error) {
+            console.error(error);
+            alert(error.message || "Something went wrong.");
+            button.textContent = "+ Add to Watchlist";
+            button.disabled = false;
+        }
+    }
+
+    // Apply both selected filters together.
+    function getFilteredMovies() {
+        const selectedLanguage =
+            document.getElementById("languageFilter")
+                .value.trim().toLowerCase();
+
+        const selectedGenre =
+            document.getElementById("genreFilter")
+                .value.trim().toLowerCase();
+
+        return allMovies.filter(movie => {
+            const movieLanguages = (movie.language || "")
+                .split(",")
+                .map(language => language.trim().toLowerCase());
+
+            const movieGenres = (movie.genres || "")
+                .split(",")
+                .map(genre => genre.trim().toLowerCase());
+
+            const matchesLanguage =
+                !selectedLanguage ||
+                movieLanguages.includes(selectedLanguage);
+
+            const matchesGenre =
+                !selectedGenre ||
+                movieGenres.includes(selectedGenre);
+
+            return matchesLanguage && matchesGenre;
+        });
+    }
+
+    // Update Explore Movies and Latest Releases together.
+    function applyFilters() {
+        const filteredMovies = getFilteredMovies();
+
+        displayMovies(filteredMovies);
+        displayLatestReleases(filteredMovies);
+    }
+
+    // Search OMDb as the user types.
+    async function searchOmdb(searchText) {
+        const resultsBox = document.getElementById("searchResults");
+        const container = document.getElementById("searchResultsContainer");
+
+        if (searchText.length < 2) {
+            resultsBox.style.display = "none";
+            return;
         }
 
-        // Search and filter movies
-        function applyFilters() {
-            const searchText = document
-                .getElementById("searchInput")
-                .value.toLowerCase().trim();
+        resultsBox.style.display = "block";
+        container.innerHTML =
+            '<p class="status-message">Searching OMDb...</p>';
 
-            const selectedLanguage =
-                document.getElementById("languageFilter").value;
+        try {
+            const response = await fetch(
+                `/api/omdb/search?q=${encodeURIComponent(searchText)}`
+            );
 
-            const selectedGenre =
-                document.getElementById("genreFilter").value;
+            const data = await response.json();
 
-            const filteredMovies = allMovies.filter(movie => {
-                const matchesSearch = (movie.title || "")
-                    .toLowerCase()
-                    .includes(searchText);
+            if (!response.ok) {
+                throw new Error(data.message || "Search failed");
+            }
 
-                const matchesLanguage = selectedLanguage === "" ||
-                    (movie.language || "").toLowerCase() ===
-                    selectedLanguage.toLowerCase();
+            const movies = (data.movies || [])
+                .filter(movie => movie.Type === "movie");
 
-                const matchesGenre = selectedGenre === "" ||
-                    (movie.genres || "").split(",").some(genre =>
-                        genre.trim().toLowerCase() ===
-                        selectedGenre.toLowerCase()
-                    );
+            if (!movies.length) {
+                container.innerHTML =
+                    '<p class="status-message">No movies found.</p>';
+                return;
+            }
 
-                return matchesSearch &&
-                       matchesLanguage &&
-                       matchesGenre;
-            });
+            container.innerHTML = movies.map(movie => `
+                <div class="movie-card">
+                    <div class="poster">
+                        ${createPosterHTML(movie.Poster, movie.Title)}
+                    </div>
 
-            displayMovies(filteredMovies);
+                    <div class="movie-info">
+                        <h3>${escapeHTML(movie.Title)}</h3>
+                        <p>${escapeHTML(movie.Year)}</p>
+
+                        <button
+                            class="import-btn"
+                            onclick="importAndOpen('${escapeHTML(movie.imdbID)}', this)">
+                            Add & View Details
+                        </button>
+                    </div>
+                </div>
+            `).join("");
+
+        } catch (error) {
+            console.error(error);
+            container.innerHTML =
+                `<p class="status-message">${escapeHTML(error.message)}</p>`;
         }
+    }
 
-        document.getElementById("searchInput")
-            .addEventListener("input", applyFilters);
+    // Search input with delay to reduce unnecessary API requests.
+    document.getElementById("searchInput")
+        .addEventListener("input", event => {
+            clearTimeout(searchTimer);
 
-        document.getElementById("languageFilter")
-            .addEventListener("change", applyFilters);
+            const searchText = event.target.value.trim();
 
-        document.getElementById("genreFilter")
-            .addEventListener("change", applyFilters);
+            searchTimer = setTimeout(() => {
+                searchOmdb(searchText);
+            }, 500);
+        });
 
-        // Start the homepage
-        updateNavigation();
-        loadMovies();
-    </script>
+    // Filter event listeners.
+    document.getElementById("languageFilter")
+        .addEventListener("change", applyFilters);
+
+    document.getElementById("genreFilter")
+        .addEventListener("change", applyFilters);
+
+    // Start homepage.
+    updateNavigation();
+    loadMovies();
+
+    loadOmdbCollection(
+        trendingIds,
+        "trendingContainer"
+    );
+
+    loadOmdbCollection(
+        popularIds,
+        "popularContainer"
+    );
+
+    loadOmdbCollection(
+        topRatedIds,
+        "topRatedContainer",
+        true
+    );
+</script>
 
 </body>
 </html>

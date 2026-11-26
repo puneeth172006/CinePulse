@@ -21,6 +21,67 @@ const db = mysql.createPool({
     port: process.env.DB_PORT
 });
 
+// OMDb configuration
+const OMDB_API_KEY = process.env.OMDB_API_KEY;
+const OMDB_URL = "https://www.omdbapi.com/";
+
+// Fetch movie information from OMDb
+async function getOmdbMovie(params) {
+    if (!OMDB_API_KEY) {
+        throw new Error("OMDb API key is missing in .env");
+    }
+
+    const query = new URLSearchParams({
+        apikey: OMDB_API_KEY,
+        ...params
+    });
+
+    const response = await fetch(`${OMDB_URL}?${query}`);
+    const data = await response.json();
+
+    if (!response.ok || data.Response === "False") {
+        throw new Error(data.Error || "OMDb request failed");
+    }
+
+    return data;
+}
+
+// Convert OMDb release date into MySQL date format
+function convertReleaseDate(released) {
+    if (!released || released === "N/A") {
+        return null;
+    }
+
+    const match = released.match(/^(\d{2}) ([A-Za-z]{3}) (\d{4})$/);
+
+    if (!match) {
+        return null;
+    }
+
+    const months = {
+        Jan: "01",
+        Feb: "02",
+        Mar: "03",
+        Apr: "04",
+        May: "05",
+        Jun: "06",
+        Jul: "07",
+        Aug: "08",
+        Sep: "09",
+        Oct: "10",
+        Nov: "11",
+        Dec: "12"
+    };
+
+    const [, day, month, year] = match;
+
+    if (!months[month]) {
+        return null;
+    }
+
+    return `${year}-${months[month]}-${day}`;
+}
+
 // Home route
 app.get("/", (req, res) => {
     res.send("Welcome to CinePulse Backend!");
@@ -92,6 +153,229 @@ app.get("/api/movies/:id", async (req, res) => {
         res.status(500).json({
             message: "Failed to fetch movie details"
         });
+    }
+});
+
+// OMDb: Search movies by title
+app.get("/api/omdb/search", async (req, res) => {
+    try {
+        const searchText = (req.query.q || "").trim();
+        const year = req.query.year;
+        const page = Math.min(
+            Math.max(parseInt(req.query.page, 10) || 1, 1),
+            100
+        );
+
+        if (!searchText) {
+            return res.status(400).json({
+                message: "Please provide a movie search term"
+            });
+        }
+
+        if (searchText.length > 100) {
+            return res.status(400).json({
+                message: "Search term is too long"
+            });
+        }
+
+        const params = {
+            s: searchText,
+            page: String(page)
+        };
+
+        if (year && /^\d{4}$/.test(year)) {
+            params.y = year;
+        }
+
+        const data = await getOmdbMovie(params);
+
+        res.json({
+            message: "OMDb movies fetched successfully!",
+            totalResults: Number(data.totalResults || 0),
+            movies: data.Search || []
+        });
+
+    } catch (error) {
+        console.error("OMDb search error:", error.message);
+
+        res.status(502).json({
+            message: error.message
+        });
+    }
+});
+
+// OMDb: Get complete movie details using IMDb ID
+app.get("/api/omdb/movie/:imdbId", async (req, res) => {
+    try {
+        const imdbId = req.params.imdbId;
+
+        if (!/^tt\d+$/.test(imdbId)) {
+            return res.status(400).json({
+                message: "Invalid IMDb movie ID"
+            });
+        }
+
+        const movie = await getOmdbMovie({
+            i: imdbId,
+            plot: "full"
+        });
+
+        res.json({
+            message: "OMDb movie details fetched successfully!",
+            movie
+        });
+
+    } catch (error) {
+        console.error("OMDb details error:", error.message);
+
+        res.status(502).json({
+            message: error.message
+        });
+    }
+});
+
+// OMDb: Import movie and genres into CinePulse MySQL
+app.post("/api/omdb/import/:imdbId", async (req, res) => {
+    let connection;
+
+    try {
+        const imdbId = req.params.imdbId;
+
+        if (!/^tt\d+$/.test(imdbId)) {
+            return res.status(400).json({
+                message: "Invalid IMDb movie ID"
+            });
+        }
+
+        const movie = await getOmdbMovie({
+            i: imdbId,
+            plot: "full"
+        });
+
+        const title = movie.Title;
+        const overview =
+            movie.Plot === "N/A" ? null : movie.Plot;
+
+        const releaseDate = convertReleaseDate(movie.Released);
+
+        const language =
+            movie.Language === "N/A"
+                ? null
+                : movie.Language;
+
+        const posterPath =
+            movie.Poster === "N/A"
+                ? null
+                : movie.Poster;
+
+        const genreNames =
+            movie.Genre && movie.Genre !== "N/A"
+                ? movie.Genre.split(",").map(g => g.trim())
+                : [];
+
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // Check whether the movie already exists
+        const [existingMovies] = await connection.query(
+            `SELECT movie_id
+             FROM movies
+             WHERE title = ?
+             AND release_date <=> ?
+             LIMIT 1`,
+            [title, releaseDate]
+        );
+
+        let movieId;
+        let imported = false;
+
+        if (existingMovies.length > 0) {
+            movieId = existingMovies[0].movie_id;
+
+            await connection.query(
+                `UPDATE movies
+                 SET overview = ?,
+                     language = ?,
+                     poster_path = ?
+                 WHERE movie_id = ?`,
+                [overview, language, posterPath, movieId]
+            );
+
+        } else {
+            const [result] = await connection.query(
+                `INSERT INTO movies
+                 (tmdb_id, title, overview, release_date, language, poster_path)
+                 VALUES (NULL, ?, ?, ?, ?, ?)`,
+                [
+                    title,
+                    overview,
+                    releaseDate,
+                    language,
+                    posterPath
+                ]
+            );
+
+            movieId = result.insertId;
+            imported = true;
+        }
+
+        // Insert genres and connect them to the movie
+        for (const genreName of genreNames) {
+            if (!genreName || genreName.length > 50) {
+                continue;
+            }
+
+            await connection.query(
+                `INSERT IGNORE INTO genres (genre_name)
+                 VALUES (?)`,
+                [genreName]
+            );
+
+            const [genreRows] = await connection.query(
+                `SELECT genre_id
+                 FROM genres
+                 WHERE genre_name = ?`,
+                [genreName]
+            );
+
+            if (genreRows.length > 0) {
+                await connection.query(
+                    `INSERT IGNORE INTO movie_genres
+                     (movie_id, genre_id)
+                     VALUES (?, ?)`,
+                    [movieId, genreRows[0].genre_id]
+                );
+            }
+        }
+
+        await connection.commit();
+
+        res.status(imported ? 201 : 200).json({
+            message: imported
+                ? "Movie imported successfully!"
+                : "Movie already existed. Its information was updated.",
+            movie_id: movieId,
+            title,
+            imdb_id: imdbId,
+            imported
+        });
+
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+
+        console.error("OMDb import error:", error.message);
+
+        res.status(500).json({
+            message: "Failed to import movie",
+            error: error.message
+        });
+
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
@@ -290,7 +574,12 @@ app.post("/api/register", async (req, res) => {
             });
         }
 
-        // Check if email already exists
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "Password must contain at least 6 characters"
+            });
+        }
+
         const [existingUser] = await db.query(
             "SELECT user_id FROM users WHERE email = ?",
             [email]
@@ -302,10 +591,8 @@ app.post("/api/register", async (req, res) => {
             });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert new user
         await db.query(
             "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
             [username, email, hashedPassword]
@@ -323,6 +610,57 @@ app.post("/api/register", async (req, res) => {
     }
 });
 
+// DEMO Forgot Password API
+app.post("/api/reset-password", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Please enter email and new password"
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "Password must contain at least 6 characters"
+            });
+        }
+
+        // Check whether the email exists
+        const [users] = await db.query(
+            "SELECT user_id FROM users WHERE email = ?",
+            [email]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({
+                message: "No account found with this email address"
+            });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Update password in MySQL
+        await db.query(
+            "UPDATE users SET password = ? WHERE email = ?",
+            [hashedPassword, email]
+        );
+
+        res.json({
+            message: "Password reset successfully!"
+        });
+
+    } catch (error) {
+        console.error("Password reset error:", error);
+
+        res.status(500).json({
+            message: "Failed to reset password"
+        });
+    }
+});
+
 // User Login API
 app.post("/api/login", async (req, res) => {
     try {
@@ -334,7 +672,6 @@ app.post("/api/login", async (req, res) => {
             });
         }
 
-        // Find user by email
         const [rows] = await db.query(
             "SELECT user_id, username, email, password FROM users WHERE email = ?",
             [email]
@@ -348,7 +685,6 @@ app.post("/api/login", async (req, res) => {
 
         const user = rows[0];
 
-        // Compare entered password with hashed password
         const isMatch = await bcrypt.compare(
             password,
             user.password

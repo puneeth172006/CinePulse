@@ -131,6 +131,20 @@
             text-decoration: underline;
         }
 
+        .forgot-link {
+            display: block;
+            text-align: right;
+            margin-top: -7px;
+            margin-bottom: 15px;
+            color: #31D7C2;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
         .hidden {
             display: none;
         }
@@ -139,180 +153,263 @@
 
 <body>
 
-    <div class="auth-container">
+<div class="auth-container">
 
-        <div class="logo">CinePulse</div>
-        <p class="subtitle">Your world of movies and reviews</p>
+    <div class="logo">CinePulse</div>
+    <p class="subtitle">Your world of movies and reviews</p>
 
-        <div class="tabs">
-            <button id="loginTab" class="active" onclick="showLogin()">
-                Login
-            </button>
-
-            <button id="registerTab" onclick="showRegister()">
-                Register
-            </button>
-        </div>
-
-        <!-- LOGIN FORM -->
-        <form id="loginForm">
-
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="loginEmail"
-                       placeholder="Enter your email" required>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword"
-                       placeholder="Enter your password" required>
-            </div>
-
-            <button type="submit" class="submit-btn">
-                Login
-            </button>
-
-        </form>
-
-        <!-- REGISTER FORM -->
-        <form id="registerForm" class="hidden">
-
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="registerUsername"
-                       placeholder="Choose a username" required>
-            </div>
-
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="registerEmail"
-                       placeholder="Enter your email" required>
-            </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="registerPassword"
-                       placeholder="Create a password"
-                       minlength="6" required>
-            </div>
-
-            <button type="submit" class="submit-btn">
-                Create Account
-            </button>
-
-        </form>
-
-        <p id="message" class="message"></p>
-
-        <a href="index.html" class="back-link">
-            ← Back to Home
-        </a>
-
+    <div class="tabs" id="tabs">
+        <button id="loginTab" class="active" onclick="showLogin()">Login</button>
+        <button id="registerTab" onclick="showRegister()">Register</button>
     </div>
 
-    <script>
-        const loginForm = document.getElementById("loginForm");
-        const registerForm = document.getElementById("registerForm");
-        const message = document.getElementById("message");
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
 
-        function showLogin() {
-            loginForm.classList.remove("hidden");
-            registerForm.classList.add("hidden");
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail"
+                   placeholder="Enter your email" required>
+        </div>
 
-            document.getElementById("loginTab").classList.add("active");
-            document.getElementById("registerTab").classList.remove("active");
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword"
+                   placeholder="Enter your password" required>
+        </div>
 
-            message.textContent = "";
+        <a href="#" class="forgot-link" onclick="showForgotPassword(event)">
+            Forgot Password?
+        </a>
+
+        <button type="submit" class="submit-btn">Login</button>
+
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" class="hidden">
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="registerUsername"
+                   placeholder="Choose a username" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="registerEmail"
+                   placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="registerPassword"
+                   placeholder="Create a password"
+                   minlength="6" required>
+        </div>
+
+        <button type="submit" class="submit-btn">Create Account</button>
+
+    </form>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <form id="forgotForm" class="hidden">
+
+        <div class="form-group">
+            <label>Registered Email Address</label>
+            <input type="email" id="forgotEmail"
+                   placeholder="Enter your registered email" required>
+        </div>
+
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="newPassword"
+                   placeholder="Enter new password"
+                   minlength="6" required>
+        </div>
+
+        <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirmPassword"
+                   placeholder="Confirm new password"
+                   minlength="6" required>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            Reset Password
+        </button>
+
+    </form>
+
+    <p id="message" class="message"></p>
+
+    <a href="index.html" class="back-link">← Back to Home</a>
+
+</div>
+
+<script>
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const forgotForm = document.getElementById("forgotForm");
+    const message = document.getElementById("message");
+    const tabs = document.getElementById("tabs");
+
+    function showLogin() {
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+        forgotForm.classList.add("hidden");
+        tabs.classList.remove("hidden");
+
+        document.getElementById("loginTab").classList.add("active");
+        document.getElementById("registerTab").classList.remove("active");
+
+        message.textContent = "";
+    }
+
+    function showRegister() {
+        registerForm.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+        forgotForm.classList.add("hidden");
+        tabs.classList.remove("hidden");
+
+        document.getElementById("registerTab").classList.add("active");
+        document.getElementById("loginTab").classList.remove("active");
+
+        message.textContent = "";
+    }
+
+    function showForgotPassword(event) {
+        event.preventDefault();
+
+        loginForm.classList.add("hidden");
+        registerForm.classList.add("hidden");
+        forgotForm.classList.remove("hidden");
+        tabs.classList.add("hidden");
+
+        document.getElementById("forgotEmail").value =
+            document.getElementById("loginEmail").value;
+
+        message.textContent = "";
+    }
+
+    // REGISTER
+    registerForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const username = document.getElementById("registerUsername").value;
+        const email = document.getElementById("registerEmail").value;
+        const password = document.getElementById("registerPassword").value;
+
+        try {
+            const response = await fetch("/api/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                registerForm.reset();
+                showLogin();
+                message.textContent =
+                    "Account created successfully! Please login.";
+                document.getElementById("loginEmail").value = email;
+            } else {
+                message.textContent =
+                    data.message || "Registration failed.";
+            }
+
+        } catch (error) {
+            message.textContent = "Unable to connect to the server.";
+        }
+    });
+
+    // LOGIN
+    loginForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem(
+                    "cinepulseUser",
+                    JSON.stringify(data.user)
+                );
+
+                message.textContent = "Login successful!";
+
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 800);
+
+            } else {
+                message.textContent =
+                    data.message || "Invalid email or password.";
+            }
+
+        } catch (error) {
+            message.textContent = "Unable to connect to the server.";
+        }
+    });
+
+    // DEMO PASSWORD RESET
+    forgotForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById("forgotEmail").value;
+        const password = document.getElementById("newPassword").value;
+        const confirmPassword =
+            document.getElementById("confirmPassword").value;
+
+        if (password !== confirmPassword) {
+            message.textContent = "Passwords do not match.";
+            return;
         }
 
-        function showRegister() {
-            registerForm.classList.remove("hidden");
-            loginForm.classList.add("hidden");
-
-            document.getElementById("registerTab").classList.add("active");
-            document.getElementById("loginTab").classList.remove("active");
-
-            message.textContent = "";
+        if (password.length < 6) {
+            message.textContent =
+                "Password must contain at least 6 characters.";
+            return;
         }
 
-        // REGISTER
-        registerForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
+        try {
+            const response = await fetch("/api/reset-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
 
-            const username = document.getElementById("registerUsername").value;
-            const email = document.getElementById("registerEmail").value;
-            const password = document.getElementById("registerPassword").value;
+            const data = await response.json();
 
-            try {
-                const response = await fetch("/api/register", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username,
-                        email,
-                        password
-                    })
-                });
+            if (response.ok) {
+                forgotForm.reset();
+                showLogin();
 
-                const data = await response.json();
+                document.getElementById("loginEmail").value = email;
 
-                if (response.ok) {
-                    message.textContent = "Account created successfully! Please login.";
-                    registerForm.reset();
-                    showLogin();
-                    message.textContent = "Account created successfully! Please login.";
-                    document.getElementById("loginEmail").value = email;
-                } else {
-                    message.textContent = data.message || "Registration failed.";
-                }
-
-            } catch (error) {
-                message.textContent = "Unable to connect to the server.";
+                message.textContent =
+                    "Password reset successfully! Please login.";
+            } else {
+                message.textContent =
+                    data.message || "Password reset failed.";
             }
-        });
 
-        // LOGIN
-        loginForm.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            const email = document.getElementById("loginEmail").value;
-            const password = document.getElementById("loginPassword").value;
-
-            try {
-                const response = await fetch("/api/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem("cinepulseUser", JSON.stringify(data.user));
-
-                    message.textContent = "Login successful!";
-
-                    setTimeout(() => {
-                        window.location.href = "index.html";
-                    }, 800);
-
-                } else {
-                    message.textContent = data.message || "Invalid email or password.";
-                }
-
-            } catch (error) {
-                message.textContent = "Unable to connect to the server.";
-            }
-        });
-    </script>
+        } catch (error) {
+            message.textContent = "Unable to connect to the server.";
+        }
+    });
+</script>
 
 </body>
 </html>
